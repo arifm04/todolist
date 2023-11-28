@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { loginUser } from '../../features/userSlice';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ const Login = () => {
     username: '',
     password: ''
   });
+  const stateData = useSelector((state) => state.user);
   const userStatus = useSelector((state) => state.user.status);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,8 +34,12 @@ const Login = () => {
   };
 
   useEffect(() => {
-    if (userStatus === 'succeeded') {
-      navigate('/home'); 
+    if (stateData?.error?.status === true) {
+      navigate('/home');
+    } else if (stateData?.error?.status === false) {
+      alert(stateData?.error?.message)
+    } else {
+
     }
   }, [userStatus, navigate]);
 
@@ -54,7 +59,7 @@ const Login = () => {
           margin="normal"
           value={loginData.email}
           onChange={handleInputChange}
-          />
+        />
         <TextField
           label="Password"
           name="password"

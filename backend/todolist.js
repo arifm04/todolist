@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const secretKey = 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTcwMTE1Njg2OSwiaWF0IjoxNzAxMTU2ODY5fQ.fpdzX10jYVo5gv-bC5OLByzVG3R3JK8PpPw8urUJz08';
 const dbURI = "mongodb+srv://admin:rpdiVsK3tLnbFrfH@cluster0.a4ifhlu.mongodb.net/?retryWrites=true&w=majority";
 
 const { MongoClient } = require('mongodb');
@@ -70,14 +72,17 @@ app.post('/login', async (req, res) => {
       {
         $limit: 1
       }
-    ];
+    ]; 
 
     const users = await collection.aggregate(aggregation).toArray();
 
     if (users.length === 0) {
       return res.status(400).send({ status: false, message: 'Invalid credentials' });
     } else {
-      return res.status(200).send({ status: true, message: 'User logged in' });
+      const tokenPayload = { email: parsedData.email };
+      const token = jwt.sign(tokenPayload, secretKey, { expiresIn: '1h' });
+
+      return res.status(200).send({ status: true, message: 'User logged in', token });
     }
 
   } catch (error) {
