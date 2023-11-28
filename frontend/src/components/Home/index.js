@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
   TextField, Button, Box, IconButton, ToggleButton, ToggleButtonGroup,
-  Avatar,MenuItem
+  Avatar, MenuItem
 } from '@mui/material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Pagination from '@mui/lab/Pagination';
 
 function TodoListPage() {
   const [tasks, setTasks] = useState([]);
@@ -18,7 +19,8 @@ function TodoListPage() {
     status: 'pending',
     category: ''
   });
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [tasksPerPage] = useState(5);
   const [editingTask, setEditingTask] = useState(null);
   const [sortKey, setSortKey] = useState('dueDate');
   const [filter, setFilter] = useState({
@@ -26,7 +28,25 @@ function TodoListPage() {
     category: '',
     status: ''
   });
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const filteredTasks = tasks.filter(task => {
+    return (filter.date ? new Date(task.dueDate).toDateString() === new Date(filter.date).toDateString() : true) &&
+      (filter.category ? task.category === filter.category : true) &&
+      (filter.status ? task.status === filter.status : true);
+  });
+  const sortedTasks = filteredTasks.slice().sort((a, b) => {
+    if (sortKey === 'dueDate') {
+      return new Date(a.dueDate) - new Date(b.dueDate);
+    } else if (sortKey === 'status') {
+      return a.status.localeCompare(b.status);
+    }
+  });
+  const currentTasks = sortedTasks.slice(indexOfFirstTask, indexOfLastTask);
 
+  const paginate = (event, value) => {
+    setCurrentPage(value);
+  };
   const handleSortChange = (event) => {
     setSortKey(event.target.value);
   };
@@ -73,20 +93,6 @@ function TodoListPage() {
     }
   };
 
-  const filteredTasks = tasks.filter(task => {
-    return (filter.date ? new Date(task.dueDate).toDateString() === new Date(filter.date).toDateString() : true) &&
-      (filter.category ? task.category === filter.category : true) &&
-      (filter.status ? task.status === filter.status : true);
-  });
-
-  const sortedTasks = filteredTasks.slice().sort((a, b) => {
-    if (sortKey === 'dueDate') {
-      return new Date(a.dueDate) - new Date(b.dueDate);
-    } else if (sortKey === 'status') {
-      return a.status.localeCompare(b.status);
-    }
-  });
-
   return (
     <div style={{ padding: '20px' }}>
       <h1>Todo List</h1>
@@ -107,7 +113,7 @@ function TodoListPage() {
           label="Filter by Category"
           value={filter.category}
           onChange={(e) => handleFilterChange('category', e.target.value)}
-          sx={{width:'15%'}}
+          sx={{ width: '15%' }}
         >
           <MenuItem value="">All</MenuItem>
           <MenuItem value="personal">Personal</MenuItem>
@@ -138,7 +144,7 @@ function TodoListPage() {
           name="category"
           value={newTask.category}
           onChange={handleChange}
-          sx={{width:"15%"}}
+          sx={{ width: "15%" }}
         >
           <MenuItem value="personal">Personal</MenuItem>
           <MenuItem value="work">Work</MenuItem>
@@ -161,9 +167,9 @@ function TodoListPage() {
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {sortedTasks.map(task => (
+        {currentTasks.map(task => (
           <Box key={task.id} sx={{ border: '1px solid #ccc', borderRadius: '4px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Avatar>
                 <AssignmentIcon />
@@ -199,6 +205,12 @@ function TodoListPage() {
             </Box>
           </Box>
         ))}
+        <Pagination
+          count={Math.ceil(sortedTasks.length / tasksPerPage)}
+          page={currentPage}
+          onChange={paginate}
+          color="primary"
+        />
       </Box>
     </div>
   );
